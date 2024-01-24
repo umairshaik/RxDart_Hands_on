@@ -7,10 +7,7 @@ enum AnimalType { dog, cat, rabbit, unknown }
 class Animal extends Thing {
   final AnimalType type;
 
-  const Animal({
-    required String name,
-    required this.type,
-  }) : super(name: name);
+  const Animal({required this.type, required super.name});
 
   @override
   String toString() => 'Animal, name: $name, type: $type';
@@ -31,7 +28,7 @@ class Animal extends Thing {
         animalType = AnimalType.unknown;
     }
     return Animal(
-      name: json["name"] as String,
+      name: json["name"],
       type: animalType,
     );
   }

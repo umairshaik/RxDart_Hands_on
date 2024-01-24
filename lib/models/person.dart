@@ -5,15 +5,11 @@ import 'package:rxdart_hands_on/models/thing.dart';
 class Person extends Thing {
   final int age;
 
-  const Person({
-    required String name,
-    required this.age,
-  }) : super(name: name);
+  const Person({required super.name, required this.age});
 
   @override
   String toString() => 'Person, name: $name, age: $age';
 
   Person.fromJson(Map<String, dynamic> json)
-      : age = json["age"] as int,
-        super(name: json["name"] as String);
+      : this(age: json["age"], name: json["name"]);
 }

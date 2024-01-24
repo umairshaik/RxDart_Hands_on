@@ -9,17 +9,15 @@ import '../models/thing.dart';
 typedef SearchTerm = String;
 
 class Api {
-  List<Animal>? _animals;
-  List<Person>? _persons;
-
-  Api();
+  List<Animal> _animals = [];
+  List<Person> _persons = [];
 
   Future<List<Thing>> search(SearchTerm searchTerm) async {
     final term = searchTerm.trim().toLowerCase();
 
     // search in the cache
     final cachedResults = _extractThingsUsingSearchTerm(term);
-    if (cachedResults != null) {
+    if (cachedResults.isNotEmpty) {
       return cachedResults;
     }
 
@@ -35,14 +33,14 @@ class Api {
         .then((json) => json.map((value) => Animal.fromJson(value)));
     _animals = animals.toList();
 
-    return _extractThingsUsingSearchTerm(term) ?? [];
+    return _extractThingsUsingSearchTerm(term);
   }
 
-  List<Thing>? _extractThingsUsingSearchTerm(SearchTerm term) {
+  List<Thing> _extractThingsUsingSearchTerm(SearchTerm term) {
     final cachedAnimals = _animals;
     final cachedPersons = _persons;
-    if (cachedAnimals != null && cachedPersons != null) {
-      List<Thing> result = [];
+    List<Thing> result = [];
+    if (cachedAnimals.isNotEmpty && cachedPersons.isNotEmpty) {
       // go through animals
       for (final animal in cachedAnimals) {
         if (animal.name.trimmedContains(term) ||
@@ -57,17 +55,15 @@ class Api {
           result.add(person);
         }
       }
-      return result;
-    } else {
-      return null;
     }
+    return result;
   }
 
   Future<List<dynamic>> _getJson(String url) => HttpClient()
       .getUrl(Uri.parse(url))
       .then((req) => req.close())
       .then((response) => response.transform(utf8.decoder).join())
-      .then((jsonString) => json.decode(jsonString) as List<dynamic>);
+      .then((jsonString) => json.decode(jsonString));
 }
 
 extension TrimmedCaseInsensitiveContain on String {

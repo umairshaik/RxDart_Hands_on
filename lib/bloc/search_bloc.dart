@@ -1,13 +1,14 @@
 import 'package:flutter/foundation.dart' show immutable;
 import 'package:rxdart/rxdart.dart';
 import 'package:rxdart_hands_on/bloc/search_result.dart';
+import 'package:rxdart_hands_on/models/thing.dart';
 
 import 'api.dart';
 
 @immutable
 class SearchBloc {
   final Sink<String> search;
-  final Stream<SearchResult?> results;
+  final Stream<SearchResult> results;
 
   void dispose() {
     search.close();
@@ -18,21 +19,22 @@ class SearchBloc {
 
     final results = textChanges
         .distinct()
-        .debounceTime(const Duration(milliseconds: 300))
-        .switchMap<SearchResult?>((String searchTerm) {
+        .debounceTime(const Duration(seconds: 1))
+        .switchMap<SearchResult>((String searchTerm) {
       if (searchTerm.isEmpty) {
         // search is empty
-        return Stream<SearchResult?>.value(null);
+        return Stream<SearchResult>.value(const SearchResultNoResult());
       } else {
         return Rx.fromCallable(() => api.search(searchTerm))
             .delay(const Duration(seconds: 1))
             .map(
-              (results) => results.isEmpty
+              (List<Thing> results) => results.isEmpty
                   ? const SearchResultNoResult()
                   : SearchResultWithResults(results),
             )
             .startWith(const SearchResultLoading())
-            .onErrorReturnWith((error, _) => SearchResultHasError(error));
+            .onErrorReturnWith((error, stackTrace) =>
+                SearchResultHasError('$error$stackTrace'));
       }
     });
 
