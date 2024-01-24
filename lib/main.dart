@@ -1,5 +1,7 @@
+import 'dart:developer' as dev_tools show log;
+
 import 'package:flutter/material.dart';
-import 'package:rxdart_hands_on/views/home_page.dart';
+import 'package:rxdart/rxdart.dart';
 
 void main() {
   runApp(
@@ -8,9 +10,7 @@ void main() {
 }
 
 class App extends StatelessWidget {
-  const App({
-    Key? key,
-  }) : super(key: key);
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,4 +22,41 @@ class App extends StatelessWidget {
       home: const HomePage(),
     );
   }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    testIt();
+    return Scaffold(
+        appBar: AppBar(
+      title: const Text('Hello World'),
+    ));
+  }
+}
+
+void testIt() async {
+  final stream1 = Stream.periodic(
+    const Duration(seconds: 1),
+    (int count) => 'Stream 1 and Count is $count',
+  );
+  final stream2 = Stream.periodic(
+    const Duration(seconds: 3),
+    (int count) => 'Stream 2 and Count is $count',
+  );
+
+  final combine = Rx.combineLatest2(
+    stream1,
+    stream2,
+    (one, two) => 'One is $one and two is $two',
+  );
+  await for (final value in combine){
+    value.log();
+  }
+}
+
+extension Log on Object {
+  void log() => dev_tools.log(toString());
 }
