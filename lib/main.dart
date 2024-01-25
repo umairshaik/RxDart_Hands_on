@@ -47,9 +47,13 @@ void testIt() async {
     (int count) => 'Stream 2 and Count is $count',
   );
 
-  final results = stream1.mergeWith([stream2] );
+  final results = Rx.zip2(
+    stream1,
+    stream2,
+    (a, b) => 'Stream1 is producing $a while Stream2 is producing $b',
+  );
 
-  await for (final value in results){
+  await for (final value in results) {
     value.log();
   }
 }
