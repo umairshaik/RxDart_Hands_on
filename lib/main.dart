@@ -47,7 +47,7 @@ void testIt() async {
     (int count) => 'Stream 2 and Count is $count',
   );
 
-  final results = stream1.concatWith([stream2] );
+  final results = stream1.mergeWith([stream2] );
 
   await for (final value in results){
     value.log();
