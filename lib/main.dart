@@ -41,18 +41,15 @@ void testIt() async {
   final stream1 = Stream.periodic(
     const Duration(seconds: 1),
     (int count) => 'Stream 1 and Count is $count',
-  );
+  ).take(3);
   final stream2 = Stream.periodic(
     const Duration(seconds: 3),
     (int count) => 'Stream 2 and Count is $count',
   );
 
-  final combine = Rx.combineLatest2(
-    stream1,
-    stream2,
-    (one, two) => 'One is $one and two is $two',
-  );
-  await for (final value in combine){
+  final results = stream1.concatWith([stream2] );
+
+  await for (final value in results){
     value.log();
   }
 }
