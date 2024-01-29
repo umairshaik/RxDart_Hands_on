@@ -1,5 +1,3 @@
-import 'dart:developer' as dev_tools show log;
-
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -24,40 +22,62 @@ class App extends StatelessWidget {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late final BehaviorSubject<DateTime> subject;
+  late final Stream<String> streamOfString;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    subject = BehaviorSubject<DateTime>();
+    streamOfString = subject.switchMap(
+      (dateTime) => Stream.periodic(
+        const Duration(seconds: 1),
+        (count) => 'Stream count =$count, dateTime = $dateTime',
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    subject.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    testIt();
     return Scaffold(
-        appBar: AppBar(
-      title: const Text('Hello World'),
-    ));
+      appBar: AppBar(
+        title: const Text('Hello World'),
+      ),
+      body: Column(
+        children: [
+          StreamBuilder(
+              stream: streamOfString,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final data = snapshot.requireData;
+                  return Text(data);
+                } else {
+                  return const Text('Waiting for the user to click the button');
+                }
+              }),
+          TextButton(
+            onPressed: () {
+              subject.add(DateTime.now());
+            },
+            child: const Text("Start the stream "),
+          )
+        ],
+      ),
+    );
   }
-}
-
-void testIt() async {
-  final stream1 = Stream.periodic(
-    const Duration(seconds: 1),
-    (int count) => 'Stream 1 and Count is $count',
-  ).take(3);
-  final stream2 = Stream.periodic(
-    const Duration(seconds: 3),
-    (int count) => 'Stream 2 and Count is $count',
-  );
-
-  final results = Rx.zip2(
-    stream1,
-    stream2,
-    (a, b) => 'Stream1 is producing $a while Stream2 is producing $b',
-  );
-
-  await for (final value in results) {
-    value.log();
-  }
-}
-
-extension Log on Object {
-  void log() => dev_tools.log(toString());
 }
