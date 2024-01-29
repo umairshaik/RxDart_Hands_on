@@ -1,6 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
+enum TypeOfThings {
+  animal,
+  person,
+}
+
+@immutable
+class Thing {
+  final TypeOfThings type;
+  final String name;
+
+  const Thing({required this.type, required this.name});
+}
+
+@immutable
+class Bloc {
+  final Sink<TypeOfThings?> setTypeOfThings;
+  final Stream<TypeOfThings?> currentTypeOfThings;
+  final Stream<Iterable<Thing>> things;
+
+  const Bloc._({
+    required this.setTypeOfThings,
+    required this.currentTypeOfThings,
+    required this.things,
+  });
+
+  void dispose() {
+    setTypeOfThings.close();
+  }
+
+  factory Bloc({required List<Thing> things}) {
+    final typeOfThingSubject = BehaviorSubject<TypeOfThings?>();
+    final filteredThings = typeOfThingSubject
+        .debounceTime(const Duration(milliseconds: 300))
+        .map<List<Thing>>((typeOfThing) {
+      if (typeOfThing != null) {
+        return things.where((element) => element.type == typeOfThing).toList();
+      } else {
+        return things;
+      }
+    }).startWith(things);
+    return Bloc._(
+      setTypeOfThings: typeOfThingSubject.sink,
+      currentTypeOfThings: typeOfThingSubject.stream,
+      things: filteredThings,
+    );
+  }
+}
+
+const List<Thing> things = [
+  Thing(type: TypeOfThings.person, name: 'Foo'),
+  Thing(type: TypeOfThings.person, name: 'Bar'),
+  Thing(type: TypeOfThings.person, name: 'Baz'),
+  Thing(type: TypeOfThings.animal, name: 'Bunz'),
+  Thing(type: TypeOfThings.animal, name: 'Fluffers'),
+  Thing(type: TypeOfThings.animal, name: 'Woofz'),
+];
+
 void main() {
   runApp(
     const App(),
@@ -30,25 +87,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late final BehaviorSubject<DateTime> subject;
-  late final Stream<String> streamOfString;
+  late final Bloc _bloc;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    subject = BehaviorSubject<DateTime>();
-    streamOfString = subject.switchMap(
-      (dateTime) => Stream.periodic(
-        const Duration(seconds: 1),
-        (count) => 'Stream count =$count, dateTime = $dateTime',
-      ),
-    );
+    _bloc = Bloc(things: things);
   }
 
   @override
   void dispose() {
-    subject.close();
+    _bloc.dispose();
     super.dispose();
   }
 
@@ -61,21 +110,42 @@ class _HomePageState extends State<HomePage> {
       body: Column(
         children: [
           StreamBuilder(
-              stream: streamOfString,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  final data = snapshot.requireData;
-                  return Text(data);
-                } else {
-                  return const Text('Waiting for the user to click the button');
-                }
-              }),
-          TextButton(
-            onPressed: () {
-              subject.add(DateTime.now());
+            stream: _bloc.currentTypeOfThings,
+            builder: (context, snapshot) {
+              final TypeOfThings? selectedTypeOfThing = snapshot.data;
+              return Wrap(
+                children: TypeOfThings.values.map((typeOfThings) {
+                  return FilterChip(
+                    selectedColor: Colors.blueAccent[100],
+                    label: Text(typeOfThings.name),
+                    onSelected: (selected) {
+                      final TypeOfThings? type = selected ? typeOfThings : null;
+                      _bloc.setTypeOfThings.add(type);
+                    },
+                    selected: selectedTypeOfThing == typeOfThings,
+                  );
+                }).toList(),
+              );
             },
-            child: const Text("Start the stream "),
-          )
+          ),
+          Expanded(
+            child: StreamBuilder(
+              stream: _bloc.things,
+              builder: (context, snapshot) {
+                final data = snapshot.data ?? [];
+                return ListView.builder(
+                  itemCount: data.length,
+                  itemBuilder: (context, index) {
+                    final thing = data.elementAt(index);
+                    return ListTile(
+                      title: Text(thing.name),
+                      subtitle: Text(thing.type.name),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
