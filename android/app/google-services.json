@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "529330932738",
+    "project_id": "rxdart-contact-app",
+    "storage_bucket": "rxdart-contact-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:529330932738:android:8c182492505a1efc68eb1b",
+        "android_client_info": {
+          "package_name": "com.umair.shaik.rxdart_hands_on"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxGRmygd1OVb01ycCrSSgSNIibMiutV4A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
