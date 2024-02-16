@@ -1,8 +1,11 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:rxdart_hands_on/firebase_options.dart';
 
 void main() {
   runApp(
@@ -47,48 +50,73 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _email = TextEditingController();
+    _password = TextEditingController();
   }
 
   @override
   void dispose() {
     super.dispose();
+    _email.dispose();
+    _password.dispose();
   }
+
+  late final TextEditingController _email;
+  late final TextEditingController _password;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Combine latest with RxDart'),
-      ),
-      body: FutureBuilder(
-          future: getAllNames().toList(),
+        appBar: AppBar(
+          title: const Text('Combine latest with RxDart'),
+        ),
+        body: FutureBuilder(
           builder: (context, snapshot) {
             switch (snapshot.connectionState) {
-              case ConnectionState.none:
-              case ConnectionState.waiting:
-              case ConnectionState.active:
-                return const Center(child: CircularProgressIndicator());
               case ConnectionState.done:
-                final List<String> names = snapshot.requireData;
-                return ListView.separated(
-                    itemBuilder: (context, position) {
-                      return ListTile(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(names[position]),
-                          ));
-                        },
-                        title: Text(names[position]),
-                      );
-                    },
-                    separatorBuilder: (_, __) {
-                      return const Divider(
-                        color: Colors.black,
-                      );
-                    },
-                    itemCount: names.length);
+                return Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _email,
+                      enableSuggestions: true,
+                      autocorrect: false,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration:
+                          const InputDecoration.collapsed(hintText: 'Email'),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _password,
+                      obscureText: true,
+                      enableSuggestions: true,
+                      autocorrect: false,
+                      decoration:
+                          const InputDecoration.collapsed(hintText: 'Password'),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () async {
+                        final email = _email.text;
+                        final password = _password.text;
+
+                        final credentials = await FirebaseAuth.instance
+                            .createUserWithEmailAndPassword(
+                          email: email,
+                          password: password,
+                        );
+                        print(credentials);
+                      },
+                      child: const Text('Register'),
+                    ),
+                  ],
+                );
+              default:
+                return const Text('Loading');
             }
-          }),
-    );
+          },
+          future: Firebase.initializeApp(
+              options: DefaultFirebaseOptions.currentPlatform),
+        ));
   }
 }
